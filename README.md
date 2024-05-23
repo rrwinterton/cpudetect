@@ -38,7 +38,7 @@ IPF SDK is available separately in addition to the code included in cpu detect, 
 IPF core packages need to be installed on the system for testing CPU detect it can be found on the google drive- [link](https://drive.google.com/drive/folders/1FpDT8CSGsZVlNrsqr2wFRHabYg-5eHLc), name of the file is ipf-2.1.10105.19-windows-setup. This install is only required if IPF specific code is being tested/developed on a fresh install or non-OEM system.
 
 ### Getting Started
-Steps to install framework and execute of samples in the SDK.
+Steps to install framework and execute of samples in the SDK. It is recommended to run this pre-release on a MTL system ONLY
 
 ### Install Framework
 Using either of the methods below.
