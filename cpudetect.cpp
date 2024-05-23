@@ -3,7 +3,6 @@
 
 #include <windows.h>
 #include <stdlib.h>
-#include <sstream>
 #include <string>
 #include <iostream>
 #include <intrin.h>
@@ -15,13 +14,6 @@
 #include <stdint.h>
 #include <winreg.h>
 #include <tchar.h>
-
-
-
-//#include "atlbase.h"
-//#include "atlstr.h"
-//#include "comutil.h"
-//#include "stdafx.h"
 
 #include "IpfClient.h"
 #include "nlohmann/json.hpp"
@@ -238,8 +230,9 @@ void NPUDriverVersion()
 
 		if( returnCode == ERROR_SUCCESS )
 		{
-			DWORD keyType = 0;
             DWORD dataSize = 0;
+            DWORD dataSize2 = 0;
+            DWORD dataSize3 = 0;
             
             
     
@@ -277,9 +270,78 @@ void NPUDriverVersion()
                     std::cout << "\n\n"; 
                     printf("NPU Driver Version: %s\n", (char*)lpData);
                  
-					break;
 				}
                 free(lpData);
+
+                //Get NPU Driver Description 
+                returnCode = ::RegGetValue(
+					nKeyHandle,
+					subKeyName,
+					_T("DriverDesc"),
+					RRF_RT_REG_SZ,
+					nullptr,
+					nullptr,
+					&dataSize2
+				);
+                
+                
+               
+                LPBYTE lpData2 = (LPBYTE)malloc(dataSize2);
+
+                returnCode = ::RegGetValue(
+					nKeyHandle,
+					subKeyName,
+					_T("DriverDesc"),
+					RRF_RT_REG_SZ,
+					nullptr,
+                    lpData2,
+					&dataSize2
+				); 
+
+				if( returnCode == ERROR_SUCCESS )
+				{
+					foundSubkey = true;
+                    
+                    std::cout << "\n\n"; 
+                    printf("NPU Driver Description: %s\n", (char*)lpData2);
+                 
+				}
+                free(lpData2);
+
+                 //Get NPU Driver Inf Details - Includes NPU version
+                returnCode = ::RegGetValue(
+					nKeyHandle,
+					subKeyName,
+					_T("InfSection"),
+					RRF_RT_REG_SZ,
+					nullptr,
+					nullptr,
+					&dataSize3
+				);
+                
+                
+               
+                LPBYTE lpData3 = (LPBYTE)malloc(dataSize3);
+
+                returnCode = ::RegGetValue(
+					nKeyHandle,
+					subKeyName,
+					_T("InfSection"),
+					RRF_RT_REG_SZ,
+					nullptr,
+                    lpData3,
+					&dataSize3
+				); 
+
+				if( returnCode == ERROR_SUCCESS )
+				{
+					foundSubkey = true;
+                    
+                    std::cout << "\n\n"; 
+                    printf("NPU Driver Inf Description: %s\n", (char*)lpData3);
+                 
+				}
+                free(lpData3);
 			
 		}
 	}
@@ -427,6 +489,7 @@ void UseLegacyCPUInformation(std::string CPUBrandString) {
     std::cout << CPUBrandString << "\n";
 }
 
+//For code review only to be updated with LNL-M code drop
 void getIPFSoCInformation()
 {
         // Get SoC brand name
@@ -449,7 +512,7 @@ void getIPFSoCInformation()
 
 		// Inspect PL1 node
 		node = ipf->GetValue("Platform.SOC.Power.PL1");
-		ConsolePrint("Platform.SOC.Power.PL1:", node);
+		ConsolePrint("Platform.SOC.Power.PL1:", node); //use for load and setup
 
         //Get Platform TDP
         node = ipf->GetValue("Platform.SOC.Power.ThermalDesignPower");
@@ -508,10 +571,10 @@ void getIPFSoCInformation()
         }
 
 }
-
+//LNL-M Pre-release IPF information 
 void getMTLIPFInformation()
 {
-    //Get Platform TDP in mW
+    //Get Platform TDP in mW 
     auto node = ipf->GetValue("Platform.SOC.Power.ThermalDesignPower");
 	ConsolePrint("Platform.SOC.Power.ThermalDesignPower in mW: ", node);
 
@@ -519,33 +582,33 @@ void getMTLIPFInformation()
 	node = ipf->GetValue("Platform.CPU.State.HWWorkloadClassification");
 	ConsolePrint("Platform.CPU.State.HWWorkloadClassification: ", node);
 
-    //Get entire node values for SOC.Power Namespace
+    //Get entire node values for SOC.Power Namespace (Note: requires admin privileges if uncommented)
     auto jsonStream = ipf->GetNode("Platform.SOC.Power");
 	ConsolePrint("ipf->GetNode(\"Platform.SOC.Power\")", jsonStream.dump(4));
 
     //Get entire node values for System.State Namespace
-    jsonStream = ipf->GetNode("Platform.System.State");
-	ConsolePrint("ipf->GetNode(\"Platform.System.State\")", jsonStream.dump(4));
+    auto jsonStream2 = ipf->GetNode("Platform.System.State");
+	ConsolePrint("ipf->GetNode(\"Platform.System.State\")", jsonStream2.dump(4));
 
     //Get entire node values for SOC.Thermal Namespace
-    jsonStream = ipf->GetNode("Platform.SOC.Thermal");
-	ConsolePrint("ipf->GetNode(\"Platform.SOC.Thermal\")", jsonStream.dump(4));
+    jsonStream2 = ipf->GetNode("Platform.SOC.Thermal");
+	ConsolePrint("ipf->GetNode(\"Platform.SOC.Thermal\")", jsonStream2.dump(4));
 
-     // Get Current iGfx energy till the last time the register was cleared in mJ
-	node = ipf->GetValue("Platform.SOC.Power.IntegratedGfxEnergy");
-	ConsolePrint("Platform.SoC.Power.IntegratedGfxEnergy in mJ: ", node);
+     // Get Current iGfx energy till the last time the register was cleared in mJ (Note: requires admin privileges if uncommented)
+	//node = ipf->GetValue("Platform.SOC.Power.IntegratedGfxEnergy");
+	//ConsolePrint("Platform.SoC.Power.IntegratedGfxEnergy in mJ: ", node);
 
-    // Get Current iGfx power in mW
-	node = ipf->GetValue("Platform.SOC.Power.IntegratedGfx");
-	ConsolePrint("Platform.SoC.Power.IntegratedGfx in mW: ", node);
+    // Get Current iGfx power in mW (Note: requires admin privileges if uncommented)
+	//node = ipf->GetValue("Platform.SOC.Power.IntegratedGfx");
+	//ConsolePrint("Platform.SoC.Power.IntegratedGfx in mW: ", node);
 
-    // Get Current SoC package power in mW
-	node = ipf->GetValue("Platform.SOC.Power.PSys");
-	ConsolePrint("Platform.SoC.Power.PSys in mW: ", node);
+    // Get Current SoC package power in mW (Note: requires admin privileges if uncommented)
+	//node = ipf->GetValue("Platform.SOC.Power.PSys");
+	//ConsolePrint("Platform.SoC.Power.PSys in mW: ", node);
 
-    // Get Current IA power in mW
-	node = ipf->GetValue("Platform.SOC.Power.IA");
-	ConsolePrint("Platform.SoC.Power.IA in mW: ", node);
+    // Get Current IA power in mW (Note: requires admin privileges if uncommented)
+	//node = ipf->GetValue("Platform.SOC.Power.IA");
+	//ConsolePrint("Platform.SoC.Power.IA in mW: ", node);
 
     // Get Current SoC Thermal Package Temp in Deci-K
 	node = ipf->GetValue("Platform.SOC.Thermal.PackageTemp");
@@ -553,7 +616,7 @@ void getMTLIPFInformation()
 
 
 }
-
+//For code review only to be updated with LNL-M code drop
 void getIPFNPUInformation()
 {
 
@@ -562,7 +625,7 @@ void getIPFNPUInformation()
 	ConsolePrint("Platform.SOC.Thermal.CurrentTemperature.NPU:  ", node);
 
 }
-
+//For code review only to be updated with LNL-M code drop
 void getIPFIGPUInformation()
 {
   
@@ -659,7 +722,8 @@ void MemoryInformation()
 
 }
 
-//main
+//main - code needs to be run as Admin for some IPF namespace access, this is for evaluation only in MTL, to be updated in LNL-M 
+
 int main()
 {
     int ret = 0;
@@ -688,7 +752,8 @@ int main()
               
                // Load IPF Extensible Framework using the Json Api
 		      ipf = std::make_unique<Ipf::ClientApiJson>();
-              auto value = ipf->GetValue("Platform.SOC.Power.IA");
+              auto value = ipf->GetValue("Platform.SOC.Power.ThermalDesignPower");
+		      //ConsolePrint("Platform.SOC.Power.ThermalDesignPower: ", value); -- remove, for test only
               auto maxTries = 5;
               int sleepInt = 2;
               bool ipfConnection = false;
@@ -698,7 +763,8 @@ int main()
                 if(value.is_null()) {
                     //todo:: May not be needed in production, used for developer testing only
                     std::this_thread::sleep_for(std::chrono::seconds(sleepTime));
-				    value = ipf->GetValue("Platform.SOC.Power.IA");
+				     value = ipf->GetValue("Platform.SOC.Power.ThermalDesignPower");
+		             //ConsolePrint("Platform.SOC.Power.ThermalDesignPower: ", value); -- remove for test only
 
                 }else {
                     ipfConnection = true;
@@ -718,7 +784,7 @@ int main()
               //getIPFNPUInformation();
               std::cout << "\n IPF Namespace output \n";
               
-              //Currently functional IPF namespace for MTL 
+              //Currently functional IPF namespace for MTL pre-release 
               getMTLIPFInformation();
 
         
@@ -743,10 +809,11 @@ int main()
                 UseHybridCPUInformation();
                 MemoryInformation(); //Get physical installed memory and memory availble
                 GPUDriverVersion(); //Get GPU driver version
+
+        
             }
             else {
                 UseLegacyCPUInformation(ProcessorInfo.brandString);
-                UseHybridCPUInformation();
                 MemoryInformation(); //Get physical installed memory and memory availble
                 GPUDriverVersion(); //Get GPU driver version
             }

@@ -23,6 +23,12 @@
 ```
 # Setup
 This document covers the setup, build and runtime process for the cpu detect functionality. Documentation related to IPF namespace can be found on google drive [link](https://drive.google.com/drive/folders/1FpDT8CSGsZVlNrsqr2wFRHabYg-5eHLc)
+Note: This IPF code is a MTL pre-release version for evaluation only ahead of the LNL-M code drop
+LNL-M Code Drops will include the following updates
+1. Single package for IPF that combines multiple namespaces to simplify setup and install
+2. Bug fixes for namespace conflicts 
+
+Note: IPF also requires that Intel(R) Dynamic Tuning Technology Device Extension Component be installed on the system you can find the compatible software for MTL pre-release in the google drive [link](https://drive.google.com/drive/folders/1FpDT8CSGsZVlNrsqr2wFRHabYg-5eHLc)
 
 ## Step 1: download/install the IPF sdk
 
@@ -47,6 +53,11 @@ Using either of the methods below.
 
 ## Step3: download the IPF extension package
 IPF extension packages need to be installed on the system for testing CPU detect it can be found on the google drive- [link](https://drive.google.com/drive/folders/1FpDT8CSGsZVlNrsqr2wFRHabYg-5eHLc), name of the file is Intel System Data IPF Extension Provider Package v02.05.1002
+Note: Only Install the following 2 extension providers (optional - these are not required to run the sample code)
+- Intel(R) System Config IPF extension provider
+- Intel(R) CSME IPF Extension provider
+If you have other extension providers installed from previous runs, pls uninstall those (PMT IPF Extension, SoC thermal Extension, Modern Standby IPF extension), these require admin command prompt run of the sample code and will cause errors if run with non-admin user privileges
+
 
 Pleas follow the manual install steps noted above for all .inf files in the extension packages 
 
@@ -77,6 +88,6 @@ Next part opens an ipf pointer to the IPF software module installed in Windows (
 To run the IPFSoC/NPU/IGFX detection functions pls install the IPF extension package as noted above
 
 ## Running CPU detect
- Execute cpudetect
+ Execute cpudetect in admin command window (this is applicable for the MTL IPF pre-release version only)
   - `cd build\<configuration>`
   - `cpudetect.exe` to run the C++ sample application
