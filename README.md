@@ -62,7 +62,7 @@ If you have other extension providers installed from previous runs, pls uninstal
 Pleas follow the manual install steps noted above for all .inf files in the extension packages 
 
 ## Step 4: Download the sample code
-Sample code can be cloned from https://github.com/rrwinterton/cpudetect 
+Sample code can be cloned from https://github.com/rrwinterton/cpudetect/Update-with-IPF-Driver-Ver-Mem branch 
 
 
 ## Step 5: Import into VS 2022
