@@ -7,17 +7,20 @@
 #include <iostream>
 #include <intrin.h>
 #include <iomanip>
-#include "HybridDetect.h"
 #include <chrono>
 #include <iostream>
 #include <thread>
 #include <stdint.h>
 #include <winreg.h>
 #include <tchar.h>
+#include "./include/HybridDetect.h"
 
-
-
-
+//processor names
+#define TIGER_LAKE 1
+#define ALDER_LAKE 2
+#define ARROW_LAKE 3
+#define METEOR_LAKE 4
+#define LUNAR_LAKE 5
 
 //todo:rrw note frequency base and max issues
 #define LEAF_FREQUENCY_INFORMATION				0x16        // Processor Frequency Information Leaf  function 0x16 only works on Skylake or newer.
@@ -29,7 +32,7 @@ typedef BOOL(WINAPI *PGetPhysicallyInstalledSystemMemory)(PULONGLONG TotalMemory
 
 void GPUDriverVersion()
 {
-    std::cout << "\n\n GPU default or primary driver version details follow: " << std::endl;
+    std::cout << std::endl << std::endl << "GPU default or primary driver version details follow: " << std::endl;
 
 	// Fetch registry data
 	HKEY dxKeyHandle = nullptr;
@@ -381,12 +384,12 @@ void OutputTotalCoresOfCoreType(int coreType, int cnt) {
 }
 
 
-//IsIntelMTLorARL
-bool IsIntelMTLorARL()
+//IntelProcessor
+bool IntelProcessor(int &ProcessorName)
 {
     const int kVendorID_Intel[3] = { 0x756e6547, 0x6c65746e, 0x49656e69 }; // "GenuntelineI"
     int regs[4];
-    bool bIsMTLorARL = false;
+    bool bDetected = false;
     __cpuid(regs, 0);
     bool bIsIntel =
         (kVendorID_Intel[0] == regs[1]) &&
@@ -399,24 +402,38 @@ bool IsIntelMTLorARL()
         int family = (basicCPUID >> 8) & 0xf;
         int extModel = ((basicCPUID & 0xf0000) >> 12) | ((basicCPUID & 0xf0) >> 4);
 
-        bIsMTLorARL = (family == 6);
-        if (bIsMTLorARL)
+        bDetected = (family == 6);
+		ProcessorName = 0;
+		if (bDetected)
         {
             switch (extModel)
             {
+			case 0x8E: // TGL-U
+				ProcessorName = TIGER_LAKE;
+				break;
+			case 0x9A: // ADL
+				ProcessorName = ALDER_LAKE;
+				break;
             case 0xAA: // MTL-P/M, ARL-Z0
             case 0xAC: // MTL-S
+				ProcessorName = METEOR_LAKE;
+                break;
             case 0xB5: // ARL-U
             case 0xC5: // ARL-P
             case 0xC6: // ARL-S/HX
+                ProcessorName = ARROW_LAKE;
+                break;
+            case 0xBD: // LNL
+                ProcessorName = LUNAR_LAKE;
                 break;
             default:
-                bIsMTLorARL = false;
+                bDetected = false;
             }
         }
-        std::cout << "CPUID: 0x" << std::hex << std::setw(8) << std::setfill('0') << basicCPUID << ", IsMTLorARL = " << bIsMTLorARL << std::endl << std::dec;
+		std::cout << "extModel: " << std::hex << extModel << std::endl;
+        std::cout << "CPUID: 0x" << std::hex << std::setw(8) << std::setfill('0') << basicCPUID << ", Detected = " << bDetected << std::endl << std::dec;
     }
-    return bIsMTLorARL;
+    return bDetected;
 }
 
 void UseHybridCPUInformation() {
@@ -461,7 +478,7 @@ void UseHybridCPUInformation() {
                 break;
             }
         }
-        std::cout << "\n\n Core Counts:\n";
+		std::cout << std::endl <<  "hybrid core counts:" << std::endl;
         OutputTotalCoresOfCoreType(HybridDetect::INTEL_CORE, coreTypeCount[0]);
         OutputTotalCoresOfCoreType(HybridDetect::INTEL_ATOM, coreTypeCount[1]);
 
@@ -475,7 +492,7 @@ void UseLegacyCPUInformation(std::string CPUBrandString) {
 
 void MemoryInformation()
 {
-    std::cout << " \n\n Memory Information follows....." << std::endl;
+	std::cout << std::endl << std::endl << "Memory Information follows....." << std::endl;
     std::cout << "\n\n";
 
     //Get information about memory installed on system
@@ -526,42 +543,54 @@ void MemoryInformation()
 int main()
 {
     int ret = 0;
-    bool bMTLorARL = false;
+    bool bDetected = false;
     int Max = 0; 
     int Base = 0;
-    int sleepTime = 2;
+    int sleepTime = 1;
+	int ProcessorName = 0;
     
-
     std::cout << "cpu detect!\n";
    
 
     GetProcessorInfo(ProcessorInfo);
     if (ProcessorInfo.IsIntel() == true) {
 
-        bMTLorARL = IsIntelMTLorARL();
-        if (bMTLorARL) {
-              std::cout << "cpu is MTL or ARL!\n";
+        bDetected = IntelProcessor(ProcessorName);
+		switch (ProcessorName) {
+		case TIGER_LAKE:
+			std::cout << "Tiger Lake" << std::endl;
+			break;
+		case ALDER_LAKE:
+			std::cout << "Alder Lake" << std::endl;
+			break;
+		case ARROW_LAKE:
+			std::cout << "Arrow Lake" << std::endl;
+			break;
+		case METEOR_LAKE:
+			std::cout << "Meteor Lake" << std::endl;
+			break;
+		case LUNAR_LAKE: 
+			std::cout << "Lunar Lake" << std::endl;
+			break;
+		default:
+			std::cout << "Unknown" << std::endl;
+			break;
+		}
+        if (bDetected) {
               UseHybridCPUInformation();
               MemoryInformation(); //Get physical installed memory and memory availble
               GPUDriverVersion(); // Get GPU driver version
-              NPUDriverVersion(); //Get NPU driver version
+              if (ProcessorName > ALDER_LAKE) {
+				  std::cout << "CPU has NPU!\n";
+				  NPUDriverVersion(); //Get NPU driver version
+              }
         }
         else {
-            std::cout << "cpu is not MTL or ARL!\n";
-            if (ProcessorInfo.hybrid == true) {
-                std::cout << "cpu is ADL!\n";
-                UseHybridCPUInformation();
-                MemoryInformation(); //Get physical installed memory and memory availble
-                GPUDriverVersion(); //Get GPU driver version
-
-        
-            }
-            else {
+            std::cout << "cpu is older!\n";
                 UseLegacyCPUInformation(ProcessorInfo.brandString);
                 MemoryInformation(); //Get physical installed memory and memory availble
                 GPUDriverVersion(); //Get GPU driver version
             }
-        }
     }
 
 }
