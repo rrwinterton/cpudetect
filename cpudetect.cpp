@@ -17,10 +17,11 @@
 
 //processor names
 #define TIGER_LAKE 1
-#define ALDER_LAKE 2
-#define ARROW_LAKE 3
-#define METEOR_LAKE 4
-#define LUNAR_LAKE 5
+#define RAPTOR_LAKE 2
+#define ALDER_LAKE 3
+#define ARROW_LAKE 4
+#define METEOR_LAKE 5
+#define LUNAR_LAKE 6
 
 //todo:rrw note frequency base and max issues
 #define LEAF_FREQUENCY_INFORMATION				0x16        // Processor Frequency Information Leaf  function 0x16 only works on Skylake or newer.
@@ -418,6 +419,10 @@ bool IntelProcessor(int &ProcessorName)
             case 0xAC: // MTL-S
 				ProcessorName = METEOR_LAKE;
                 break;
+			case 0xB7:
+				ProcessorName = RAPTOR_LAKE;
+				break;
+
             case 0xB5: // ARL-U
             case 0xC5: // ARL-P
             case 0xC6: // ARL-S/HX
@@ -559,6 +564,9 @@ int main()
 		switch (ProcessorName) {
 		case TIGER_LAKE:
 			std::cout << "Tiger Lake" << std::endl;
+			break;
+		case RAPTOR_LAKE:
+			std::cout << "Raptor Lake" << std::endl;
 			break;
 		case ALDER_LAKE:
 			std::cout << "Alder Lake" << std::endl;
